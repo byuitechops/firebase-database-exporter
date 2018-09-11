@@ -1,10 +1,10 @@
 const COLLECTION = 'tool_logs';
+const auth = require('./auth.json');
+const filepath = `${__dirname}/backups`;
 
 const admin = require('firebase-admin');
 const fs = require('file-system');
 const moment = require('moment');
-const auth = require('./auth.json');
-const filepath = `${__dirname}/backups`;
 
 admin.initializeApp({
   credential: admin.credential.cert(auth),
@@ -13,17 +13,18 @@ admin.initializeApp({
 
 const collectionRef = admin.firestore().collection(COLLECTION);
 
-//TODO: remove backups folder to get updated copies
-
 async function createBackups() {
   let offset = 0;
   let stagger = true;
 
   try {
+    //stagger the backup of the entire database - don't want to overflow the server with requests
+    //offset allows us to continue at the spot where we end the previous request
     while (stagger) {
       console.log(`Retrieving...`);
       let requests = await collectionRef.limit(500).offset(offset).get();
 
+      //process each document and write them as json file in computer
       requests.forEach(request => {
         offset++;
         fs.writeFile(createName(request),
@@ -33,8 +34,10 @@ async function createBackups() {
           });
         // console.log(`${request.id} successfully written. Offset: ${offset}.`);
       });
+      //test to see if we reached the end
       if (offset % 500 !== 0) stagger = false;
 
+      //keep user up to date
       console.log((stagger) ? 'Batch completed.' : 'Backup completed.');
     }
   } catch (err) {
@@ -42,8 +45,9 @@ async function createBackups() {
   }
 };
 
+//names
 function createName(snapshot) {
-  return `${filepath}/${snapshot.id} ${moment().format('ll')}.json`;
+  return `${filepath}/${snapshot.id}_${moment().format('ll')}.json`;
 }
 
 createBackups();
