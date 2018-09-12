@@ -11,8 +11,19 @@ admin.initializeApp({
   databaseURL: "https://katana-24a36.firebaseio.com"
 });
 
+// Backwards compatability with Firestore's new timestamp storage rules
+admin.firestore().settings({
+  timestampsInSnapshots: true
+});
+
 const collectionRef = admin.firestore().collection(COLLECTION);
 
+/**
+ * createBackups()
+ * 
+ * This function makes the api calls needed to obtain the stuff needed.
+ * and stores them in a specific directory
+ **/
 async function createBackups() {
   let offset = 0;
   let stagger = true;
@@ -32,7 +43,7 @@ async function createBackups() {
           (err) => {
             if (err) throw err;
           });
-        // console.log(`${request.id} successfully written. Offset: ${offset}.`);
+        console.log(`${request.id} successfully written. Offset: ${offset}.`);
       });
       //test to see if we reached the end
       if (offset % 500 !== 0) stagger = false;
@@ -43,11 +54,18 @@ async function createBackups() {
   } catch (err) {
     console.log(`Error: ${err}`);
   }
-};
-
-//names
-function createName(snapshot) {
-  return `${filepath}/${snapshot.id}_${moment().format('ll')}.json`;
 }
 
+/**
+ * createBackups()
+ * @param {string} request formats the string for the filename in
+ * 
+ * This function makes the api calls needed to obtain the stuff needed.
+ * and stores them in a specific directory
+ **/
+function createName(request) {
+  return `${filepath}/${request.id}_${moment().format('ll')}.json`;
+}
+
+//start here
 createBackups();
