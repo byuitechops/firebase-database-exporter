@@ -10,7 +10,7 @@ In either case, it will delete the file after checking to see if the file exists
 
 To setup and run an instance of firebase-database-explorer, please do the following:
 
-1. In the terminal, execute `npm install`
+1. In the terminal, execute `npm install`.
 
 2. Retrieve Katana serviceKey.json and rename it to auth.json.
 

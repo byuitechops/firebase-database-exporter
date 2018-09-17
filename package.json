@@ -1,0 +1,18 @@
+{
+  "name": "course-export",
+  "version": "1.0.0",
+  "description": "node.js file to download firestore database as backup",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sam McGrath",
+  "license": "MIT",
+  "dependencies": {
+    "file-system": "^2.2.2",
+    "firebase-admin": "^6.0.0",
+    "glob": "^7.1.3",
+    "moment": "^2.22.2"
+  }
+}

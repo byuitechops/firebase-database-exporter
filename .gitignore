@@ -1,4 +1,3 @@
 node_modules/
 backups/
-*.json
 auth.json
