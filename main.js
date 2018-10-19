@@ -2,10 +2,11 @@ const COLLECTION = 'tool_logs';
 const auth = require('./auth.json');
 const filepath = `${__dirname}/backups`;
 
-const admin = require('firebase-admin');
 const fs = require('file-system');
-const moment = require('moment');
 const glob = require('glob');
+const admin = require('firebase-admin');
+const timer = require('repeat-timer');
+const moment = require('moment');
 
 admin.initializeApp({
   credential: admin.credential.cert(auth),
@@ -25,7 +26,7 @@ const collectionRef = admin.firestore().collection(COLLECTION);
  * This function makes the api calls needed to obtain the stuff needed.
  * and stores them in a specific directory
  **/
-async function createBackups() {
+timer(async function createBackups() {
   let offset = 0;
   let stagger = true;
 
@@ -34,7 +35,7 @@ async function createBackups() {
     //offset allows us to continue at the spot where we end the previous request
     while (stagger) {
       console.log(`Retrieving...`);
-      let requests = await collectionRef.limit(500).offset(offset).get();
+      let requests = await collectionRef.limit(10).offset(offset).get();
 
       //process each document and write them as json file in computer
       requests.forEach(request => {
@@ -52,7 +53,7 @@ async function createBackups() {
   } catch (err) {
     console.log(`Error: ${err}`);
   }
-}
+});
 
 /**
  * backup()
@@ -100,5 +101,3 @@ function backup(request, backupCallback) {
 function createName(request) {
   return `${filepath}/${request.id}_${moment().format('ll')}.json`;
 }
-
-createBackups();
