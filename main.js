@@ -1,21 +1,21 @@
-const COLLECTION = 'tool_logs';
-const auth = require('./auth.json');
-const filepath = `${__dirname}/backups`;
-
 const fs = require('file-system');
 const glob = require('glob');
 const admin = require('firebase-admin');
 const timer = require('repeat-timer');
 const moment = require('moment');
 
+const COLLECTION = 'tool_logs';
+const auth = require('./auth.json');
+const filepath = `${__dirname}/backups`;
+
 admin.initializeApp({
-  credential: admin.credential.cert(auth),
-  databaseURL: "https://katana-24a36.firebaseio.com"
+   credential: admin.credential.cert(auth),
+   databaseURL: "https://katana-24a36.firebaseio.com"
 });
 
 // Backwards compatability with Firestore's new timestamp storage rules
 admin.firestore().settings({
-  timestampsInSnapshots: true
+   timestampsInSnapshots: true
 });
 
 const collectionRef = admin.firestore().collection(COLLECTION);
@@ -27,32 +27,32 @@ const collectionRef = admin.firestore().collection(COLLECTION);
  * and stores them in a specific directory
  **/
 timer(async function createBackups() {
-  let offset = 0;
-  let stagger = true;
+   let offset = 0;
+   let stagger = true;
 
-  try {
-    //stagger the backup of the entire database - don't want to overflow the server with requests
-    //offset allows us to continue at the spot where we end the previous request
-    while (stagger) {
-      console.log(`Retrieving...`);
-      let requests = await collectionRef.limit(10).offset(offset).get();
+   try {
+      //stagger the backup of the entire database - don't want to overflow the server with requests
+      //offset allows us to continue at the spot where we end the previous request
+      while (stagger) {
+         console.log(`Retrieving...`);
+         let requests = await collectionRef.limit(25).offset(offset).get();
 
-      //process each document and write them as json file in computer
-      requests.forEach(request => {
-        offset++;
+         //process each document and write them as json file in computer
+         requests.forEach(request => {
+            offset++;
 
-        backup(request, (err) => {
-          //test to see if we reached the end
-          if (offset % 500 !== 0) stagger = false;
+            backup(request, (err) => {
+               //test to see if we reached the end
+               if (offset % 500 !== 0) stagger = false;
 
-          //keep user up to date
-          console.log((stagger) ? 'Batch completed.' : 'Backup completed.');
-        });
-      });
-    }
-  } catch (err) {
-    console.log(`Error: ${err}`);
-  }
+               //keep user up to date
+               console.log((stagger) ? 'Batch completed.' : 'Backup completed.');
+            });
+         });
+      }
+   } catch (err) {
+      console.log(`Error: ${err}`);
+   }
 });
 
 /**
@@ -65,30 +65,30 @@ timer(async function createBackups() {
  * deleting. This is how we are backing up the data on the database.
  **/
 function backup(request, backupCallback) {
-  glob(`backups/${request.id}_*.json`, (err, files) => {
-    if (err) {
-      backupCallback(err);
-      return;
-    }
+   glob(`backups/${request.id}_*.json`, (err, files) => {
+      if (err) {
+         backupCallback(err);
+         return;
+      }
 
-    //file does not exist so write and delete.
-    if (files.length < 1) {
-      fs.writeFile(createName(request),
-        JSON.stringify(request.data()),
-        (err) => {
-          if (err) throw err;
-        });
-      console.log(`${request.id} successfully backed up.`);
-      //file exists so just delete.
-    } else {
-      console.log(`${request.id} already backed up so moving on to deletion.`);
-    }
+      //file does not exist so write and delete.
+      if (files.length < 1) {
+         fs.writeFile(createName(request),
+            JSON.stringify(request.data()),
+            (err) => {
+               if (err) throw err;
+            });
+         console.log(`${request.id} successfully backed up.`);
+         //file exists so just delete.
+      } else {
+         console.log(`${request.id} already backed up so moving on to deletion.`);
+      }
 
-    request.ref.delete();
-    console.log(`${request.id} successfully deleted.`);
+      request.ref.delete();
+      console.log(`${request.id} successfully deleted.`);
 
-    backupCallback(null);
-  });
+      backupCallback(null);
+   });
 }
 
 /**
@@ -99,5 +99,5 @@ function backup(request, backupCallback) {
  * inside backups folder.
  **/
 function createName(request) {
-  return `${filepath}/${request.id}_${moment().format('ll')}.json`;
+   return `${filepath}/${request.id}_${moment().format('ll')}.json`;
 }
